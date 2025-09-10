@@ -1,0 +1,8 @@
+openapi: 3.0.3
+info:
+  title: TaskHive API
+  version: 1.0.0
+paths:
+  /api/auth/signup: { post: { summary: Signup, responses: { "201": { description: Created } } } }
+  /api/auth/login:  { post: { summary: Login,  responses: { "200": { description: OK } } } }
+  /api/billing/checkout: { post: { summary: Create Stripe checkout session (auth), responses: { "200": { description: OK } } } }
