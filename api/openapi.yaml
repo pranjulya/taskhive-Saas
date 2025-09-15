@@ -6,3 +6,51 @@ paths:
   /api/auth/signup: { post: { summary: Signup, responses: { "201": { description: Created } } } }
   /api/auth/login:  { post: { summary: Login,  responses: { "200": { description: OK } } } }
   /api/billing/checkout: { post: { summary: Create Stripe checkout session (auth), responses: { "200": { description: OK } } } }
+  
+  /api/teams:
+    post:
+      summary: Create a new team
+      security: [{ BearerAuth: [] }]
+      responses: { "201": { description: Created } }
+    
+  /api/teams/{teamId}:
+    get:
+      summary: Get team details
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    put:
+      summary: Update team
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    delete:
+      summary: Delete team
+      security: [{ BearerAuth: [] }]
+      responses: { "204": { description: No Content } }
+      
+  /api/teams/{teamId}/members:
+    get:
+      summary: List team members
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    post:
+      summary: Add team member
+      security: [{ BearerAuth: [] }]
+      responses: { "201": { description: Created } }
+      
+  /api/teams/{teamId}/members/{userId}:
+    delete:
+      summary: Remove team member
+      security: [{ BearerAuth: [] }]
+      responses: { "204": { description: No Content } }
+      
+  /api/teams/{teamId}/members/{userId}/role:
+    put:
+      summary: Update member role
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
