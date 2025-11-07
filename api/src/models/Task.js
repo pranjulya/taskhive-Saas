@@ -4,6 +4,7 @@ const taskSchema = new mongoose.Schema({
   title: String,
   description: String,
   status: { type: String, enum: ["todo","doing","done"], default: "todo" },
-  assignee: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  assignee: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  dueDate: Date
 }, { timestamps: true });
 export default mongoose.model("Task", taskSchema);

@@ -1,6 +1,3 @@
-
-## `api/package.json`
-```json
 {
   "name": "taskhive-api",
   "version": "1.0.0",
