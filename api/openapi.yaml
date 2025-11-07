@@ -49,6 +49,30 @@ paths:
       security: [{ BearerAuth: [] }]
       responses: { "200": { description: OK } }
 
+  /api/teams/{teamId}/tasks:
+    get:
+      summary: Get all tasks for a team
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    post:
+      summary: Create a new task
+      security: [{ BearerAuth: [] }]
+      responses: { "201": { description: Created } }
+
+  /api/tasks/{taskId}:
+    get:
+      summary: Get a single task by ID
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    put:
+      summary: Update a task
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
+    delete:
+      summary: Delete a task
+      security: [{ BearerAuth: [] }]
+      responses: { "204": { description: No Content } }
+
 components:
   securitySchemes:
     BearerAuth:
