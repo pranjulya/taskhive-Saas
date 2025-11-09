@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createTeam } from "../../lib/api";
+import Link from "next/link";
+import { createTeam, getTeams } from "../../lib/api";
 
 export default function TeamsPage() {
   const [teamName, setTeamName] = useState("");
@@ -9,7 +10,26 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState([]);
 
   useEffect(() => {
-    // TODO: Fetch teams from the API
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to view teams.");
+      return;
+    }
+
+    const fetchTeams = async () => {
+      try {
+        const teamsData = await getTeams(token);
+        if (Array.isArray(teamsData)) {
+          setTeams(teamsData);
+        } else {
+          setError(teamsData.message || "Failed to fetch teams.");
+        }
+      } catch (err) {
+        setError("An error occurred while fetching teams.");
+      }
+    };
+
+    fetchTeams();
   }, []);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
@@ -63,7 +83,7 @@ export default function TeamsPage() {
         <ul className="list-group">
           {teams.map((team) => (
             <li key={team._id} className="list-group-item">
-              {team.name}
+              <Link href={`/teams/${team._id}`}>{team.name}</Link>
             </li>
           ))}
         </ul>
