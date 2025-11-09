@@ -1,0 +1,25 @@
+.kanbanBoard {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.column {
+  flex: 1;
+  background-color: #f4f5f7;
+  border-radius: 0.25rem;
+  padding: 1rem;
+}
+
+.columnTitle {
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.taskCard {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+}
