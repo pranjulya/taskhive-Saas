@@ -5,8 +5,9 @@ Next.js frontend for TaskHive. It talks to the Express API in [`../api`](../api)
 ## Pages
 - `/login` and `/signup`: authentication
 - `/dashboard`: placeholder dashboard page
-- `/teams`: your teams (UI calls `GET /api/teams`; the API currently has no list-my-teams route — only create and `/:teamId` CRUD — so this page is a known gap until that endpoint exists)
+- `/teams`: your teams (`GET /api/teams` lists memberships for the signed-in user)
 - `/teams/[teamId]`: Kanban board for a team's tasks (create, edit and delete tasks)
+- `/billing/success` and `/billing/cancel`: Stripe Checkout redirect targets
 
 ## Getting started
 ```bash
@@ -15,7 +16,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api npm run dev
 ```
 Open http://localhost:4001.
 
-`NEXT_PUBLIC_API_URL` is the API base URL including `/api`; if unset it defaults to `http://localhost:3001/api` (see `src/lib/api.ts`).
+`NEXT_PUBLIC_API_URL` is the API base URL including `/api`; if unset it defaults to `http://localhost:8080/api` (see `src/lib/api.ts`).
 
 ## Scripts
 - `npm run dev`: dev server on port 4001

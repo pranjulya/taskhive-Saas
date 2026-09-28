@@ -2,14 +2,27 @@
 
 import { useState, useEffect } from "react";
 
-export default function TaskModal({ task, onSave, onClose }) {
+export type TaskDraft = {
+  _id?: string;
+  title?: string;
+  description?: string;
+  status?: string;
+};
+
+type TaskModalProps = {
+  task: TaskDraft | null;
+  onSave: (task: TaskDraft) => void;
+  onClose: () => void;
+};
+
+export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (task) {
-      setTitle(task.title);
-      setDescription(task.description);
+      setTitle(task.title || "");
+      setDescription(task.description || "");
     } else {
       setTitle("");
       setDescription("");
@@ -17,7 +30,7 @@ export default function TaskModal({ task, onSave, onClose }) {
   }, [task]);
 
   const handleSave = () => {
-    onSave({ ...task, title, description });
+    onSave({ ...(task || {}), title, description });
   };
 
   return (

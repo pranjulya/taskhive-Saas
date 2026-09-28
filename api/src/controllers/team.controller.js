@@ -25,6 +25,18 @@ export async function createTeam(req, res) {
   }
 }
 
+// List the teams the current user belongs to
+export async function listMyTeams(req, res) {
+  try {
+    const memberships = await Membership.find({ user: req.userId }).select("team");
+    const teamIds = memberships.map((m) => m.team);
+    const teams = await Team.find({ _id: { $in: teamIds } }).sort({ createdAt: 1 });
+    res.json(teams);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 // Get team details
 export async function getTeam(req, res) {
   try {

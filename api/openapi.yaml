@@ -8,6 +8,10 @@ paths:
   /api/billing/checkout: { post: { summary: Create Stripe checkout session (auth), responses: { "200": { description: OK } } } }
   
   /api/teams:
+    get:
+      summary: List the teams the current user belongs to
+      security: [{ BearerAuth: [] }]
+      responses: { "200": { description: OK } }
     post:
       summary: Create a new team
       security: [{ BearerAuth: [] }]

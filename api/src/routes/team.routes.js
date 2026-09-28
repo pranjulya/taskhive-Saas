@@ -2,6 +2,7 @@ import { Router } from "express";
 import { auth } from "../middleware/auth.js";
 import {
   createTeam,
+  listMyTeams,
   getTeam,
   updateTeam,
   deleteTeam,
@@ -14,6 +15,7 @@ import {
 const router = Router();
 
 // Team CRUD routes
+router.get("/", auth, listMyTeams);
 router.post("/", auth, createTeam);
 router.get("/:teamId", auth, getTeam);
 router.put("/:teamId", auth, updateTeam);

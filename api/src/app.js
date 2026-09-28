@@ -20,4 +20,12 @@ app.use("/api/teams", teamRoutes);
 app.use("/api", taskRoutes);
 
 app.get("/", (_, res) => res.json({ ok: true, name: "TaskHive API" }));
+
+// Fallback JSON error handler (e.g. missing server configuration)
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 export default app;

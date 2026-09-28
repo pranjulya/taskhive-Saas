@@ -10,27 +10,31 @@ import {
   deleteTask,
 } from "../../../lib/api";
 import styles from "./Kanban.module.css";
-import TaskModal from "./TaskModal";
+import TaskModal, { type TaskDraft } from "./TaskModal";
 
 export default function TeamPage() {
   const params = useParams();
-  const { teamId } = params;
-  const [team, setTeam] = useState(null);
-  const [tasks, setTasks] = useState([]);
+  const teamId = Array.isArray(params.teamId) ? params.teamId[0] : params.teamId;
+  const [team, setTeam] = useState<{ _id: string; name: string } | null>(null);
+  const [tasks, setTasks] = useState<TaskDraft[]>([]);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState<TaskDraft | null>(null);
 
   useEffect(() => {
     if (teamId) {
       fetchData();
     }
-  }, [teamId]);
+  }, [teamId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("You must be logged in to view this page.");
+      return;
+    }
+    if (!teamId) {
+      setError("Missing team id.");
       return;
     }
 
@@ -48,12 +52,12 @@ export default function TeamPage() {
       } else {
         setError(tasksData.message || "Failed to fetch tasks.");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred while fetching data.");
     }
   };
 
-  const handleOpenModal = (task = null) => {
+  const handleOpenModal = (task: TaskDraft | null = null) => {
     setSelectedTask(task);
     setShowModal(true);
   };
@@ -63,7 +67,7 @@ export default function TeamPage() {
     setSelectedTask(null);
   };
 
-  const handleSaveTask = async (taskData) => {
+  const handleSaveTask = async (taskData: TaskDraft) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -71,28 +75,29 @@ export default function TeamPage() {
       if (taskData._id) {
         await updateTask(taskData._id, taskData, token);
       } else {
+        if (!teamId) return;
         await createTask(teamId, taskData, token);
       }
       fetchData(); // Refetch data to show the changes
       handleCloseModal();
-    } catch (err) {
+    } catch {
       setError("Failed to save task.");
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async (taskId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
       await deleteTask(taskId, token);
       fetchData(); // Refetch data to show the changes
-    } catch (err) {
+    } catch {
       setError("Failed to delete task.");
     }
   };
 
-  const renderTasks = (status) => {
+  const renderTasks = (status: string) => {
     return tasks
       .filter((task) => task.status === status)
       .map((task) => (
@@ -107,7 +112,7 @@ export default function TeamPage() {
           </button>
           <button
             className="btn btn-danger btn-sm ms-2"
-            onClick={() => handleDeleteTask(task._id)}
+            onClick={() => task._id && handleDeleteTask(task._id)}
           >
             Delete
           </button>

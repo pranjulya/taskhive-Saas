@@ -1,8 +1,14 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { getJwtSecret, JWT_CONFIG } from "../config/auth.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // TODO: Move to config
+// The user id is stored in the standard `sub` claim; middleware/auth.js reads the same claim.
+function signToken(user) {
+  return jwt.sign({ sub: user._id.toString() }, getJwtSecret(), {
+    expiresIn: JWT_CONFIG.expiresIn,
+    algorithm: JWT_CONFIG.algorithm
+  });
+}
 
 // User registration
 export async function signup(req, res) {
@@ -15,24 +21,12 @@ export async function signup(req, res) {
       return res.status(400).json({ error: "Email already registered" });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create new user
-    const user = new User({
-      email,
-      password: hashedPassword,
-      name
-    });
+    // Create new user (the model stores a bcrypt hash in `passwordHash`)
+    const user = new User({ email, name });
+    await user.setPassword(password);
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
     res.status(201).json({
       token,
@@ -54,22 +48,17 @@ export async function login(req, res) {
 
     // Find user
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.validatePassword(password);
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
     res.json({
       token,

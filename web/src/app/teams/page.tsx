@@ -7,7 +7,7 @@ import { createTeam, getTeams } from "../../lib/api";
 export default function TeamsPage() {
   const [teamName, setTeamName] = useState("");
   const [error, setError] = useState("");
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState<{ _id: string; name: string }[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -24,7 +24,7 @@ export default function TeamsPage() {
         } else {
           setError(teamsData.message || "Failed to fetch teams.");
         }
-      } catch (err) {
+      } catch {
         setError("An error occurred while fetching teams.");
       }
     };
@@ -48,7 +48,7 @@ export default function TeamsPage() {
       } else {
         setError(newTeam.message || "Failed to create team.");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred while creating the team.");
     }
   };

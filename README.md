@@ -7,7 +7,7 @@
 
 A **job-ready SaaS clone**: Auth, teams, tasks with a Kanban board UI (Next.js), and **Stripe subscription checkout**.
 
-**Limitations:** Stripe Checkout session creation is implemented (`POST /api/billing/checkout`), but there is no Stripe webhook and no subscription status stored against a user or team yet. Checkout success/cancel pages under `/billing/*` are also not built in the web app.
+**Limitations:** Stripe Checkout session creation is implemented (`POST /api/billing/checkout`) and the web app has `/billing/success` and `/billing/cancel` pages matching the Stripe redirect URLs. There is still no Stripe webhook and no subscription status stored against a user or team yet.
 
 ## Project structure
 ```
@@ -26,12 +26,10 @@ npm install
 npm run dev
 ```
 
-**Known issue:** `api/src/server.js` currently imports `connectDB` but never connects or calls `app.listen()`, so `npm run dev` exits immediately. Treat the commands above as the intended workflow; a code fix for the server entrypoint is tracked separately.
-
 Scripts in `api/package.json`:
-- `npm run dev`: run `src/server.js` with Node
+- `npm run dev`: connect to MongoDB and listen (requires `MONGO_URI` and `JWT_SECRET`)
 - `npm start`: same, with `NODE_ENV=production`
-- `npm test`: run Jest (there are no test files in `api/` yet)
+- `npm test`: run Jest (in-memory MongoDB; no external DB needed)
 
 ### Environment variables (`api/.env`)
 | Variable | Purpose |
@@ -49,13 +47,13 @@ cd web
 npm ci
 NEXT_PUBLIC_API_URL=http://localhost:8080/api npm run dev
 ```
-The web app runs on http://localhost:4001. `NEXT_PUBLIC_API_URL` must point at the API's `/api` base (it defaults to `http://localhost:3001/api`).
+The web app runs on http://localhost:4001. `NEXT_PUBLIC_API_URL` must point at the API's `/api` base (it defaults to `http://localhost:8080/api`).
 
 ## 📡 API endpoints
 All routes except signup and login require an `Authorization: Bearer <token>` header. See `api/openapi.yaml` for details.
 
 - `POST /api/auth/signup`, `POST /api/auth/login`
-- `POST /api/teams`, `GET|PUT|DELETE /api/teams/:teamId`
+- `GET /api/teams` (list my teams), `POST /api/teams`, `GET|PUT|DELETE /api/teams/:teamId`
 - `GET|POST /api/teams/:teamId/members`, `DELETE /api/teams/:teamId/members/:userId`, `PUT /api/teams/:teamId/members/:userId/role`
 - `GET|POST /api/teams/:teamId/tasks`, `GET|PUT|DELETE /api/tasks/:taskId`
 - `POST /api/billing/checkout`: creates a Stripe Checkout subscription session and returns its `url`

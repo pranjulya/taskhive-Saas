@@ -9,7 +9,7 @@ export default function Home() {
           <div className="col-md-8">
             <h1>Welcome to TaskHive</h1>
             <p className="lead">
-              The best platform to manage your team's tasks and boost productivity.
+              The best platform to manage your team&apos;s tasks and boost productivity.
             </p>
             <a href="/signup" className="btn btn-primary btn-lg">Get Started</a>
           </div>
