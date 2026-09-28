@@ -5,7 +5,7 @@ Next.js frontend for TaskHive. It talks to the Express API in [`../api`](../api)
 ## Pages
 - `/login` and `/signup`: authentication
 - `/dashboard`: placeholder dashboard page
-- `/teams`: your teams
+- `/teams`: your teams (UI calls `GET /api/teams`; the API currently has no list-my-teams route — only create and `/:teamId` CRUD — so this page is a known gap until that endpoint exists)
 - `/teams/[teamId]`: Kanban board for a team's tasks (create, edit and delete tasks)
 
 ## Getting started
