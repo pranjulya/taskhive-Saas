@@ -80,4 +80,17 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("returns 404 (not a crash) when removing a non-member (M1)", async () => {
+    const owner = (await signup("kate@example.com")).body;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner.token}`).send({ name: "M1" })
+    ).body;
+
+    const res = await request(app)
+      .delete(`/api/teams/${team._id}/members/64b64c2f4f5c8a1b2c3d4e5f`)
+      .set("Authorization", `Bearer ${owner.token}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Member not found");
+  });
 });

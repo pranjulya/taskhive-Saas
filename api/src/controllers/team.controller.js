@@ -173,6 +173,10 @@ export async function removeTeamMember(req, res) {
       user: req.params.userId
     });
 
+    if (!targetMembership) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
     // Prevent removing the owner
     if (targetMembership.role === "owner") {
       return res.status(403).json({ error: "Cannot remove team owner" });
