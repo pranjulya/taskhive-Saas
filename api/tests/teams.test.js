@@ -80,4 +80,46 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("deletes a team together with its tasks and memberships", async () => {
+    const token = (await signup("dave@example.com")).body.token;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${token}`).send({ name: "Doomed" })
+    ).body;
+
+    await request(app)
+      .post(`/api/teams/${team._id}/tasks`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Will be deleted too" });
+
+    const del = await request(app)
+      .delete(`/api/teams/${team._id}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(del.status).toBe(204);
+
+    // Team is gone from the owner's list and no longer accessible.
+    const list = await request(app).get("/api/teams").set("Authorization", `Bearer ${token}`);
+    expect(list.body.map((t) => t.name)).toEqual([]);
+    const get = await request(app)
+      .get(`/api/teams/${team._id}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(get.status).toBe(403);
+
+    // The team's tasks were deleted with it, not orphaned.
+    const { default: Task } = await import("../src/models/Task.js");
+    expect(await Task.countDocuments({ team: team._id })).toBe(0);
+  });
+
+  it("does not let a non-owner delete a team", async () => {
+    const owner = (await signup("erin@example.com")).body.token;
+    const other = (await signup("frank@example.com")).body.token;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner}`).send({ name: "Keep" })
+    ).body;
+
+    const del = await request(app)
+      .delete(`/api/teams/${team._id}`)
+      .set("Authorization", `Bearer ${other}`);
+    expect(del.status).toBe(403);
+  });
 });
