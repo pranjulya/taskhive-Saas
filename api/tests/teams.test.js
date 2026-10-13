@@ -80,4 +80,27 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("rejects adding the same user to a team twice (M2)", async () => {
+    const owner = (await signup("liam@example.com")).body;
+    const member = (await signup("mia@example.com")).body;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner.token}`).send({ name: "Dupes" })
+    ).body;
+
+    const add = () =>
+      request(app)
+        .post(`/api/teams/${team._id}/members`)
+        .set("Authorization", `Bearer ${owner.token}`)
+        .send({ userId: member.user.id });
+
+    expect((await add()).status).toBe(201);
+    const second = await add();
+    expect(second.status).toBe(409);
+
+    const members = await request(app)
+      .get(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`);
+    expect(members.body).toHaveLength(2); // owner + the one membership
+  });
 });
