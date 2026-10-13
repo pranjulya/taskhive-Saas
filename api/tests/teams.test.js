@@ -80,4 +80,34 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("adds members but never assigns the owner role (H2)", async () => {
+    const owner = (await signup("gina@example.com")).body;
+    const joiner = (await signup("henry@example.com")).body;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner.token}`).send({ name: "Crew" })
+    ).body;
+
+    // Minting a second owner through the API is forbidden.
+    const escalate = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: joiner.user.id, role: "owner" });
+    expect(escalate.status).toBe(403);
+
+    // A normal add defaults to "member".
+    const added = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: joiner.user.id });
+    expect(added.status).toBe(201);
+    expect(added.body.role).toBe("member");
+
+    // Adding a user id that does not exist is a 404, not a phantom member.
+    const ghost = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: "64b64c2f4f5c8a1b2c3d4e5f" });
+    expect(ghost.status).toBe(404);
+  });
 });
