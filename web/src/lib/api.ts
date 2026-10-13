@@ -3,7 +3,28 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/a
 type Json = Record<string, unknown>;
 
 async function parseJson(response: Response) {
-  return response.json();
+  let data: any;
+  try {
+    data = await response.json();
+  } catch {
+    return {};
+  }
+  // The API's error contract is inconsistent: the auth/team controllers
+  // return `{ error: "..." }` while the task controller returns
+  // `{ message: "..." }`. Every page reads `.message`, which meant real
+  // API errors ("Invalid credentials", "Email already registered") were
+  // silently swallowed and replaced with generic fallbacks. Normalize
+  // here, in the one place all responses pass through.
+  if (
+    data &&
+    typeof data === "object" &&
+    !Array.isArray(data) &&
+    "error" in data &&
+    !("message" in data)
+  ) {
+    return { ...data, message: data.error };
+  }
+  return data;
 }
 
 export const login = async (email: string, password: string) => {
