@@ -80,4 +80,26 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("requires a non-empty team name (M3)", async () => {
+    const token = (await signup("nina@example.com")).body.token;
+    const noName = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(noName.status).toBe(400);
+
+    const blank = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "   " });
+    expect(blank.status).toBe(400);
+
+    const ok = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "  Padded  " });
+    expect(ok.status).toBe(201);
+    expect(ok.body.name).toBe("Padded");
+  });
 });
