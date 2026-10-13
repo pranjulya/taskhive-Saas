@@ -80,4 +80,35 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
+
+  it("validates role changes and protects the only owner (H3)", async () => {
+    const owner = (await signup("ivan@example.com")).body;
+    const member = (await signup("judy@example.com")).body;
+    const team = (
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner.token}`).send({ name: "Roles" })
+    ).body;
+    await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: member.user.id });
+
+    const setRole = (userId, role, token = owner.token) =>
+      request(app)
+        .put(`/api/teams/${team._id}/members/${userId}/role`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ role });
+
+    // Arbitrary role strings must not persist.
+    expect((await setRole(member.user.id, "superuser")).status).toBe(400);
+    // "owner" is not assignable here either.
+    expect((await setRole(member.user.id, "owner")).status).toBe(400);
+    // A valid change works.
+    const promoted = await setRole(member.user.id, "admin");
+    expect(promoted.status).toBe(200);
+    expect(promoted.body.role).toBe("admin");
+    // Unknown member is a 404.
+    expect((await setRole("64b64c2f4f5c8a1b2c3d4e5f", "admin")).status).toBe(404);
+    // The only owner cannot be demoted (the team would be locked).
+    expect((await setRole(owner.user.id, "member")).status).toBe(400);
+  });
 });
