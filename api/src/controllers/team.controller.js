@@ -5,19 +5,34 @@ import mongoose from "mongoose";
 // Create a new team
 export async function createTeam(req, res) {
   try {
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+    if (!name) {
+      return res.status(400).json({ error: "Team name is required" });
+    }
+
     const team = new Team({
-      name: req.body.name,
+      name,
       owner: req.userId
     });
     await team.save();
 
-    // Create ownership membership
-    const membership = new Membership({
-      team: team._id,
-      user: req.userId,
-      role: "owner"
-    });
-    await membership.save();
+    try {
+      // Create ownership membership
+      const membership = new Membership({
+        team: team._id,
+        user: req.userId,
+        role: "owner"
+      });
+      await membership.save();
+    } catch (membershipErr) {
+      // Compensating cleanup: a team without its owner membership is
+      // invisible and unmanageable (nobody can see, update, or delete
+      // it), so don't leave one behind. A multi-document transaction
+      // would need a replica set; this keeps standalone MongoDB
+      // deployments correct too.
+      await Team.findByIdAndDelete(team._id);
+      throw membershipErr;
+    }
 
     res.status(201).json(team);
   } catch (err) {
