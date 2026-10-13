@@ -148,6 +148,18 @@ export async function addTeamMember(req, res) {
       user: req.body.userId,
       role: req.body.role || "member"
     });
+
+    // One membership per user per team. The unique index on the model is
+    // the hard guarantee; this check turns a duplicate add into a clean
+    // 409 instead of a raw duplicate-key error.
+    const existing = await Membership.findOne({
+      team: req.params.teamId,
+      user: req.body.userId
+    });
+    if (existing) {
+      return res.status(409).json({ error: "User is already a member of this team" });
+    }
+
     await membership.save();
 
     res.status(201).json(membership);
