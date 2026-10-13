@@ -1,5 +1,6 @@
 import Team from "../models/Team.js";
 import Membership from "../models/Membership.js";
+import User from "../models/User.js";
 import mongoose from "mongoose";
 
 // Create a new team
@@ -143,10 +144,29 @@ export async function addTeamMember(req, res) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
 
+    // The owner role is never granted through this endpoint: ownership is
+    // created with the team, and letting an admin mint a new owner would
+    // be a privilege escalation (a second owner can delete the team,
+    // change roles, and remove members).
+    const role = req.body.role || "member";
+    if (role === "owner") {
+      return res.status(403).json({ error: "The owner role cannot be assigned" });
+    }
+    if (!["admin", "member"].includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
+    }
+
+    // The target must be a real user; otherwise the membership points at
+    // nobody and pollutes member lists.
+    const target = await User.findById(req.body.userId);
+    if (!target) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const membership = new Membership({
       team: req.params.teamId,
       user: req.body.userId,
-      role: req.body.role || "member"
+      role
     });
     await membership.save();
 
