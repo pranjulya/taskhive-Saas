@@ -5,7 +5,15 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   role: { type: String, enum: ["student", "teacher"], default: "student" },
-  passwordHash: String
+  passwordHash: String,
+  // Billing state, maintained by the Stripe webhook (billing.controller.js).
+  stripeCustomerId: String,
+  subscriptionId: String,
+  subscriptionStatus: {
+    type: String,
+    enum: ["none", "active", "past_due", "canceled"],
+    default: "none"
+  }
 }, { timestamps: true });
 
 userSchema.methods.setPassword = async function (pwd) {
