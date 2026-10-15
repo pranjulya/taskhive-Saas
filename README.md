@@ -7,7 +7,7 @@
 
 A **job-ready SaaS clone**: Auth, teams, tasks with a Kanban board UI (Next.js), and **Stripe subscription checkout**.
 
-**Limitations:** Stripe Checkout session creation is implemented (`POST /api/billing/checkout`) and the web app has `/billing/success` and `/billing/cancel` pages matching the Stripe redirect URLs. There is still no Stripe webhook and no subscription status stored against a user or team yet.
+**Billing:** Stripe Checkout session creation is implemented (`POST /api/billing/checkout`); sessions carry the user's id (`client_reference_id` + metadata), and a Stripe webhook (`POST /api/billing/webhook`, signature-verified) records the subscription status, subscription id, and Stripe customer id on the user. The web app has `/billing/success` and `/billing/cancel` pages matching the Stripe redirect URLs.
 
 ## Project structure
 ```
@@ -39,6 +39,7 @@ Scripts in `api/package.json`:
 | `JWT_SECRET` | Secret for signing JWTs |
 | `STRIPE_SECRET_KEY` | Stripe secret key (test mode: `sk_test_...`) |
 | `STRIPE_PRICE_PRO` | Stripe Price ID for the Pro subscription |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret for the Stripe webhook endpoint (`whsec_...`) |
 | `FRONTEND_URL` | Base URL for Stripe Checkout success/cancel redirects (use `http://localhost:4001` to match the Next.js app) |
 
 ## 🖥️ Quick Start (Web)

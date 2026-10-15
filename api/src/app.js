@@ -11,6 +11,9 @@ import taskRoutes from "./routes/task.routes.js";
 const app = express();
 app.use(helmet());
 app.use(cors());
+// Stripe webhook signature verification needs the exact raw bytes Stripe
+// sent, so this path is parsed as a Buffer before the JSON parser runs.
+app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(morgan("dev"));
 
