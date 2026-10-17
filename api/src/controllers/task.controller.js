@@ -1,6 +1,7 @@
 import Task from "../models/Task.js";
 import Team from "../models/Team.js";
 import Membership from "../models/Membership.js";
+import { sendError } from "../utils/errors.js";
 
 // @desc    Create a new task
 // @route   POST /api/teams/:teamId/tasks
@@ -12,7 +13,7 @@ export const createTask = async (req, res) => {
   try {
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ message: "Team not found" });
+      return res.status(404).json({ error: "Team not found" });
     }
 
     // Check if the user is a member of the team
@@ -23,7 +24,7 @@ export const createTask = async (req, res) => {
     if (!membership) {
       return res
         .status(403)
-        .json({ message: "You are not a member of this team" });
+        .json({ error: "You are not a member of this team" });
     }
 
     const task = new Task({
@@ -38,7 +39,7 @@ export const createTask = async (req, res) => {
     const createdTask = await task.save();
     res.status(201).json(createdTask);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -51,7 +52,7 @@ export const getTasks = async (req, res) => {
   try {
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ message: "Team not found" });
+      return res.status(404).json({ error: "Team not found" });
     }
 
     // Check if the user is a member of the team
@@ -62,13 +63,13 @@ export const getTasks = async (req, res) => {
     if (!membership) {
       return res
         .status(403)
-        .json({ message: "You are not a member of this team" });
+        .json({ error: "You are not a member of this team" });
     }
 
     const tasks = await Task.find({ team: teamId });
     res.json(tasks);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -81,7 +82,7 @@ export const getTaskById = async (req, res) => {
   try {
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({ error: "Task not found" });
     }
 
     // Check if the user is a member of the team the task belongs to
@@ -91,13 +92,13 @@ export const getTaskById = async (req, res) => {
     });
     if (!membership) {
       return res.status(403).json({
-        message: "You are not authorized to view this task",
+        error: "You are not authorized to view this task",
       });
     }
 
     res.json(task);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -111,7 +112,7 @@ export const updateTask = async (req, res) => {
   try {
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({ error: "Task not found" });
     }
 
     // Check if the user is a member of the team the task belongs to
@@ -121,7 +122,7 @@ export const updateTask = async (req, res) => {
     });
     if (!membership) {
       return res.status(403).json({
-        message: "You are not authorized to update this task",
+        error: "You are not authorized to update this task",
       });
     }
 
@@ -134,7 +135,7 @@ export const updateTask = async (req, res) => {
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendError(res, error);
   }
 };
 
@@ -147,7 +148,7 @@ export const deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({ error: "Task not found" });
     }
 
     // Check if the user is a member of the team the task belongs to
@@ -157,13 +158,13 @@ export const deleteTask = async (req, res) => {
     });
     if (!membership) {
       return res.status(403).json({
-        message: "You are not authorized to delete this task",
+        error: "You are not authorized to delete this task",
       });
     }
 
     await Task.deleteOne({ _id: task._id });
     res.json({ message: "Task removed" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    sendError(res, error);
   }
 };

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { getJwtSecret, JWT_CONFIG } from "../config/auth.js";
+import { sendError } from "../utils/errors.js";
 
 // The user id is stored in the standard `sub` claim; middleware/auth.js reads the same claim.
 function signToken(user) {
@@ -37,7 +38,7 @@ export async function signup(req, res) {
       }
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -69,6 +70,6 @@ export async function login(req, res) {
       }
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
