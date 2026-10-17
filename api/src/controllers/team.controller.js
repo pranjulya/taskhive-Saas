@@ -1,5 +1,6 @@
 import Team from "../models/Team.js";
 import Membership from "../models/Membership.js";
+import { sendError } from "../utils/errors.js";
 import mongoose from "mongoose";
 
 // Create a new team
@@ -21,7 +22,7 @@ export async function createTeam(req, res) {
 
     res.status(201).json(team);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -33,7 +34,7 @@ export async function listMyTeams(req, res) {
     const teams = await Team.find({ _id: { $in: teamIds } }).sort({ createdAt: 1 });
     res.json(teams);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -55,7 +56,7 @@ export async function getTeam(req, res) {
 
     res.json(team);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -82,7 +83,7 @@ export async function updateTeam(req, res) {
 
     res.json(team);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -108,7 +109,7 @@ export async function deleteTeam(req, res) {
 
     res.status(204).send();
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -127,7 +128,7 @@ export async function listTeamMembers(req, res) {
       .populate("user", "name email");
     res.json(members);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -152,7 +153,7 @@ export async function addTeamMember(req, res) {
 
     res.status(201).json(membership);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -181,7 +182,7 @@ export async function removeTeamMember(req, res) {
     await Membership.findByIdAndDelete(targetMembership._id);
     res.status(204).send();
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
 
@@ -212,6 +213,6 @@ export async function updateMemberRole(req, res) {
 
     res.json(targetMembership);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    sendError(res, err);
   }
 }
