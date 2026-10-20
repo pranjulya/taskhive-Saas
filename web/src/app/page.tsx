@@ -1,9 +1,6 @@
-import Header from '@/components/Header';
-
 export default function Home() {
   return (
     <div>
-      <Header />
       <main className="container mt-5">
         <div className="row">
           <div className="col-md-8">
