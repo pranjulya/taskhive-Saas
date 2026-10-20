@@ -1,5 +1,6 @@
 import Team from "../models/Team.js";
 import Membership from "../models/Membership.js";
+import User from "../models/User.js";
 import mongoose from "mongoose";
 
 // Create a new team
@@ -98,13 +99,17 @@ export async function deleteTeam(req, res) {
       return res.status(403).json({ error: "Must be team owner" });
     }
 
-    // Delete team and all associated memberships
-    const session = await mongoose.startSession();
-    await session.withTransaction(async () => {
-      await Team.findByIdAndDelete(req.params.teamId);
-      await Membership.deleteMany({ team: req.params.teamId });
-    });
-    session.endSession();
+    // Delete the team's data in dependency order: tasks and memberships
+    // first, the team itself last. This deliberately does not use a
+    // transaction: the previous version opened a session but never bound
+    // its deletes to it ({ session } was never passed), so nothing was
+    // actually atomic — and the transaction commit also errored on
+    // standalone MongoDB deployments, after the deletes had already run.
+    // Sequential deletes in this order degrade safely: if one fails, the
+    // owner still has access and can retry the delete.
+    await Task.deleteMany({ team: req.params.teamId });
+    await Membership.deleteMany({ team: req.params.teamId });
+    await Team.findByIdAndDelete(req.params.teamId);
 
     res.status(204).send();
   } catch (err) {
@@ -143,10 +148,29 @@ export async function addTeamMember(req, res) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
 
+    // The owner role is never granted through this endpoint: ownership is
+    // created with the team, and letting an admin mint a new owner would
+    // be a privilege escalation (a second owner can delete the team,
+    // change roles, and remove members).
+    const role = req.body.role || "member";
+    if (role === "owner") {
+      return res.status(403).json({ error: "The owner role cannot be assigned" });
+    }
+    if (!["admin", "member"].includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
+    }
+
+    // The target must be a real user; otherwise the membership points at
+    // nobody and pollutes member lists.
+    const target = await User.findById(req.body.userId);
+    if (!target) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const membership = new Membership({
       team: req.params.teamId,
       user: req.body.userId,
-      role: req.body.role || "member"
+      role
     });
     await membership.save();
 
