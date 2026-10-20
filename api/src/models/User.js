@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
+  name: { type: String, required: true, trim: true },
+  email: { type: String, unique: true, required: true },
   role: { type: String, enum: ["student", "teacher"], default: "student" },
   passwordHash: String
 }, { timestamps: true });
