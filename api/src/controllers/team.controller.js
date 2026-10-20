@@ -221,20 +221,42 @@ export async function updateMemberRole(req, res) {
       return res.status(403).json({ error: "Must be team owner" });
     }
 
-    const targetMembership = await Membership.findOneAndUpdate(
-      {
-        team: req.params.teamId,
-        user: req.params.userId
-      },
-      { $set: { role: req.body.role } },
-      { new: true }
-    );
+    // Roles here only ever move between "admin" and "member". "owner" is
+    // rejected (this endpoint is not an ownership transfer), and any other
+    // string is rejected up front: previously the value went straight
+    // into findOneAndUpdate, which does not run schema validators by
+    // default, so arbitrary roles like "superuser" were persisted and
+    // silently broke the role checks everywhere else.
+    const role = req.body.role;
+    if (!["admin", "member"].includes(role)) {
+      return res.status(400).json({ error: "Role must be 'admin' or 'member'" });
+    }
 
+    const targetMembership = await Membership.findOne({
+      team: req.params.teamId,
+      user: req.params.userId
+    });
     if (!targetMembership) {
       return res.status(404).json({ error: "Member not found" });
     }
 
-    res.json(targetMembership);
+    // A team must never be left without an owner: demoting the only owner
+    // would make role changes and team deletion impossible forever.
+    if (targetMembership.role === "owner") {
+      const ownerCount = await Membership.countDocuments({
+        team: req.params.teamId,
+        role: "owner"
+      });
+      if (ownerCount <= 1) {
+        return res.status(400).json({ error: "Cannot demote the team's only owner" });
+      }
+    }
+
+    // save() always runs schema validators (findOneAndUpdate did not).
+    targetMembership.role = role;
+    const updated = await targetMembership.save();
+
+    res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
