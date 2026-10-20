@@ -1,6 +1,20 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { getJwtSecret, JWT_CONFIG } from "../config/auth.js";
+
+// Email is the account identity: it is stored and looked up trimmed and
+// lowercased (the schema also enforces this), so "User@x.com" and
+// "user@x.com" are one account, not two.
+function normalizeEmail(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : email;
+}
+
+// A real bcrypt hash of a placeholder password. Login compares against
+// this when the account doesn't exist, so the response takes the same
+// time as a genuine password check and doesn't reveal, via timing,
+// whether an email is registered.
+const DUMMY_PASSWORD_HASH = "$2a$10$q8Q6w.wr/4rXdKkr0O3mD.U5PAXNpEbOgWKjgircZROB9Hg0HB4ba";
 
 // The user id is stored in the standard `sub` claim; middleware/auth.js reads the same claim.
 function signToken(user) {
@@ -13,7 +27,8 @@ function signToken(user) {
 // User registration
 export async function signup(req, res) {
   try {
-    const { email, password, name } = req.body;
+    const { password, name } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -44,11 +59,14 @@ export async function signup(req, res) {
 // User login
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     // Find user
     const user = await User.findOne({ email });
     if (!user || !user.passwordHash) {
+      // Spend the same bcrypt time as a real attempt (see DUMMY_PASSWORD_HASH).
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 

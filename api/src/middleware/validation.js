@@ -7,7 +7,9 @@ export function validateSignup(req, res, next) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  if (!email.match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
+  // Trim before matching: the controller normalizes (trim + lowercase),
+  // so surrounding whitespace must not reject an otherwise valid email.
+  if (typeof email !== "string" || !email.trim().match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
     return res.status(400).json({ error: "Invalid email format" });
   }
 
@@ -31,7 +33,9 @@ export function validateLogin(req, res, next) {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  if (!email.match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
+  // Trim before matching: the controller normalizes (trim + lowercase),
+  // so surrounding whitespace must not reject an otherwise valid email.
+  if (typeof email !== "string" || !email.trim().match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
     return res.status(400).json({ error: "Invalid email format" });
   }
 
