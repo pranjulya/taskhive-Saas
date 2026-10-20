@@ -26,6 +26,20 @@ export const createTask = async (req, res) => {
         .json({ message: "You are not a member of this team" });
     }
 
+    // An assignee must belong to the team; previously any user id (or a
+    // nonexistent one) could be assigned.
+    if (assignee) {
+      const assigneeMembership = await Membership.findOne({
+        team: teamId,
+        user: assignee,
+      });
+      if (!assigneeMembership) {
+        return res
+          .status(400)
+          .json({ message: "Assignee is not a member of this team" });
+      }
+    }
+
     const task = new Task({
       team: teamId,
       title,
@@ -125,11 +139,26 @@ export const updateTask = async (req, res) => {
       });
     }
 
-    task.title = title || task.title;
-    task.description = description || task.description;
-    task.status = status || task.status;
-    task.assignee = assignee || task.assignee;
-    task.dueDate = dueDate || task.dueDate;
+    if (assignee) {
+      const assigneeMembership = await Membership.findOne({
+        team: task.team,
+        user: assignee,
+      });
+      if (!assigneeMembership) {
+        return res.status(400).json({
+          message: "Assignee is not a member of this team",
+        });
+      }
+    }
+
+    // Only fields actually present in the request are changed, and null
+    // clears assignee/dueDate. The old `value || task.value` fallbacks
+    // made it impossible to ever unassign a task or clear its due date.
+    if (title !== undefined) task.title = title;
+    if (description !== undefined) task.description = description;
+    if (status !== undefined) task.status = status;
+    if (assignee !== undefined) task.assignee = assignee;
+    if (dueDate !== undefined) task.dueDate = dueDate;
 
     const updatedTask = await task.save();
     res.json(updatedTask);
