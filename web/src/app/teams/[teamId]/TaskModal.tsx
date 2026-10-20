@@ -11,26 +11,38 @@ export type TaskDraft = {
 
 type TaskModalProps = {
   task: TaskDraft | null;
+  // Column the board's "Add Task" was clicked in, so a task created from
+  // "In Progress" doesn't silently land in "To Do".
+  defaultStatus?: string;
   onSave: (task: TaskDraft) => void;
   onClose: () => void;
 };
 
-export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
+const STATUS_OPTIONS = [
+  { value: "todo", label: "To Do" },
+  { value: "doing", label: "In Progress" },
+  { value: "done", label: "Done" },
+];
+
+export default function TaskModal({ task, defaultStatus, onSave, onClose }: TaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState("todo");
 
   useEffect(() => {
     if (task) {
       setTitle(task.title || "");
       setDescription(task.description || "");
+      setStatus(task.status || "todo");
     } else {
       setTitle("");
       setDescription("");
+      setStatus(defaultStatus || "todo");
     }
-  }, [task]);
+  }, [task, defaultStatus]);
 
   const handleSave = () => {
-    onSave({ ...(task || {}), title, description });
+    onSave({ ...(task || {}), title, description, status });
   };
 
   return (
@@ -61,6 +73,21 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               ></textarea>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="status" className="form-label">Status</label>
+              <select
+                className="form-select"
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="modal-footer">
