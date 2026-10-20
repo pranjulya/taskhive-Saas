@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 
+import { rateLimit } from "./middleware/rateLimit.js";
 import authRoutes from "./routes/auth.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
 import teamRoutes from "./routes/team.routes.js";
@@ -13,6 +14,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+// Generous global ceiling; the strict per-route limits live on the
+// credential endpoints (see routes/auth.routes.js).
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/billing", billingRoutes);
