@@ -100,3 +100,15 @@ export const createTeam = async (name: string, token: string) => {
   });
   return parseJson(response);
 };
+
+export const createCheckoutSession = async (token: string) => {
+  const response = await fetch(`${API_BASE_URL}/billing/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({}),
+  });
+  return parseJson(response);
+};
