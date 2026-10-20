@@ -20,6 +20,7 @@ export default function TeamPage() {
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskDraft | null>(null);
+  const [newTaskStatus, setNewTaskStatus] = useState("todo");
 
   useEffect(() => {
     if (teamId) {
@@ -57,8 +58,9 @@ export default function TeamPage() {
     }
   };
 
-  const handleOpenModal = (task: TaskDraft | null = null) => {
+  const handleOpenModal = (task: TaskDraft | null = null, status = "todo") => {
     setSelectedTask(task);
+    setNewTaskStatus(status);
     setShowModal(true);
   };
 
@@ -142,7 +144,7 @@ export default function TeamPage() {
               {renderTasks("doing")}
               <button
                 className="btn btn-primary btn-sm mt-2"
-                onClick={() => handleOpenModal()}
+                onClick={() => handleOpenModal(null, "doing")}
               >
                 + Add Task
               </button>
@@ -160,6 +162,7 @@ export default function TeamPage() {
       {showModal && (
         <TaskModal
           task={selectedTask}
+          defaultStatus={newTaskStatus}
           onSave={handleSaveTask}
           onClose={handleCloseModal}
         />
