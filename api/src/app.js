@@ -12,7 +12,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(morgan("dev"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/billing", billingRoutes);
@@ -20,6 +20,11 @@ app.use("/api/teams", teamRoutes);
 app.use("/api", taskRoutes);
 
 app.get("/", (_, res) => res.json({ ok: true, name: "TaskHive API" }));
+
+// Unknown routes get the API's JSON shape too, not Express's HTML page.
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
 
 // Fallback JSON error handler (e.g. missing server configuration)
 // eslint-disable-next-line no-unused-vars

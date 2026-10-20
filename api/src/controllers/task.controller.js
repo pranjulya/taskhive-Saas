@@ -65,7 +65,10 @@ export const getTasks = async (req, res) => {
         .json({ message: "You are not a member of this team" });
     }
 
-    const tasks = await Task.find({ team: teamId });
+    // Basic pagination: ?limit= (default 100, max 200) &offset=
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 100, 1), 200);
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+    const tasks = await Task.find({ team: teamId }).skip(offset).limit(limit);
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: error.message });
