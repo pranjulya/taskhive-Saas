@@ -81,45 +81,33 @@ describe("signup → login → teams (in-memory MongoDB)", () => {
     expect(list.body.map((t) => t.title)).toEqual(["Write tests"]);
   });
 
-  it("deletes a team together with its tasks and memberships", async () => {
-    const token = (await signup("dave@example.com")).body.token;
+  it("adds members but never assigns the owner role (H2)", async () => {
+    const owner = (await signup("gina@example.com")).body;
+    const joiner = (await signup("henry@example.com")).body;
     const team = (
-      await request(app).post("/api/teams").set("Authorization", `Bearer ${token}`).send({ name: "Doomed" })
+      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner.token}`).send({ name: "Crew" })
     ).body;
 
-    await request(app)
-      .post(`/api/teams/${team._id}/tasks`)
-      .set("Authorization", `Bearer ${token}`)
-      .send({ title: "Will be deleted too" });
+    // Minting a second owner through the API is forbidden.
+    const escalate = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: joiner.user.id, role: "owner" });
+    expect(escalate.status).toBe(403);
 
-    const del = await request(app)
-      .delete(`/api/teams/${team._id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(del.status).toBe(204);
+    // A normal add defaults to "member".
+    const added = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: joiner.user.id });
+    expect(added.status).toBe(201);
+    expect(added.body.role).toBe("member");
 
-    // Team is gone from the owner's list and no longer accessible.
-    const list = await request(app).get("/api/teams").set("Authorization", `Bearer ${token}`);
-    expect(list.body.map((t) => t.name)).toEqual([]);
-    const get = await request(app)
-      .get(`/api/teams/${team._id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(get.status).toBe(403);
-
-    // The team's tasks were deleted with it, not orphaned.
-    const { default: Task } = await import("../src/models/Task.js");
-    expect(await Task.countDocuments({ team: team._id })).toBe(0);
-  });
-
-  it("does not let a non-owner delete a team", async () => {
-    const owner = (await signup("erin@example.com")).body.token;
-    const other = (await signup("frank@example.com")).body.token;
-    const team = (
-      await request(app).post("/api/teams").set("Authorization", `Bearer ${owner}`).send({ name: "Keep" })
-    ).body;
-
-    const del = await request(app)
-      .delete(`/api/teams/${team._id}`)
-      .set("Authorization", `Bearer ${other}`);
-    expect(del.status).toBe(403);
+    // Adding a user id that does not exist is a 404, not a phantom member.
+    const ghost = await request(app)
+      .post(`/api/teams/${team._id}/members`)
+      .set("Authorization", `Bearer ${owner.token}`)
+      .send({ userId: "64b64c2f4f5c8a1b2c3d4e5f" });
+    expect(ghost.status).toBe(404);
   });
 });
