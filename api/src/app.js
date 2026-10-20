@@ -10,7 +10,14 @@ import taskRoutes from "./routes/task.routes.js";
 
 const app = express();
 app.use(helmet());
-app.use(cors());
+// Only the web app may call this API from a browser. FRONTEND_URL is
+// already the deployment's known frontend origin (it also builds the
+// Stripe redirect URLs); previously cors() allowed every origin.
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:4001"
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
