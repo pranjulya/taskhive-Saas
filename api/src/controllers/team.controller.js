@@ -99,13 +99,17 @@ export async function deleteTeam(req, res) {
       return res.status(403).json({ error: "Must be team owner" });
     }
 
-    // Delete team and all associated memberships
-    const session = await mongoose.startSession();
-    await session.withTransaction(async () => {
-      await Team.findByIdAndDelete(req.params.teamId);
-      await Membership.deleteMany({ team: req.params.teamId });
-    });
-    session.endSession();
+    // Delete the team's data in dependency order: tasks and memberships
+    // first, the team itself last. This deliberately does not use a
+    // transaction: the previous version opened a session but never bound
+    // its deletes to it ({ session } was never passed), so nothing was
+    // actually atomic — and the transaction commit also errored on
+    // standalone MongoDB deployments, after the deletes had already run.
+    // Sequential deletes in this order degrade safely: if one fails, the
+    // owner still has access and can retry the delete.
+    await Task.deleteMany({ team: req.params.teamId });
+    await Membership.deleteMany({ team: req.params.teamId });
+    await Team.findByIdAndDelete(req.params.teamId);
 
     res.status(204).send();
   } catch (err) {
