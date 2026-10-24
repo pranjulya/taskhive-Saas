@@ -1,4 +1,5 @@
 import "dotenv/config";
+import mongoose from "mongoose";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
 import { getJwtSecret } from "./config/auth.js";
@@ -14,9 +15,24 @@ async function start() {
 
   await connectDB(process.env.MONGO_URI);
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 TaskHive API listening on http://localhost:${PORT}`);
   });
+
+  // Graceful shutdown: stop accepting connections, let in-flight
+  // requests finish, then close the database pool — previously SIGTERM
+  // just killed the process mid-request.
+  for (const signal of ["SIGTERM", "SIGINT"]) {
+    process.on(signal, () => {
+      console.log(`Received ${signal}, shutting down...`);
+      server.close(async () => {
+        await mongoose.disconnect();
+        process.exit(0);
+      });
+      // Don't hang forever on a stuck connection.
+      setTimeout(() => process.exit(1), 10000).unref();
+    });
+  }
 }
 
 start().catch((err) => {

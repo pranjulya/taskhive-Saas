@@ -128,8 +128,13 @@ export async function listTeamMembers(req, res) {
       return res.status(403).json({ error: "Not a team member" });
     }
 
+    // Basic pagination: ?limit= (default 100, max 200) &offset=
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 100, 1), 200);
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0);
     const members = await Membership.find({ team: req.params.teamId })
-      .populate("user", "name email");
+      .populate("user", "name email")
+      .skip(offset)
+      .limit(limit);
     res.json(members);
   } catch (err) {
     res.status(400).json({ error: err.message });
